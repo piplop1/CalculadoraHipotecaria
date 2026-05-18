@@ -28,6 +28,12 @@ public class PrestamoHipotecario extends javax.swing.JFrame {
         jTable2.setModel(tableModel);
         //llena el JComboBox con los años
         jComboBox1.setModel(new DefaultComboBoxModel<>(llenarAnios()));
+        
+        // Establecer el tamaño por defecto como el tamaño mínimo permitido
+        this.setMinimumSize(this.getPreferredSize());
+        
+        // Bloquear la redimensión para mantener el diseño intacto y la tabla funcional
+        this.setResizable(false);
     }
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -275,22 +281,31 @@ public class PrestamoHipotecario extends javax.swing.JFrame {
     }//GEN-LAST:event_btnBorrarActionPerformed
     //se hace los calculos correspondientes con validaciones una vez ingresados los datos correctamente 
     private void btnCalcularActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCalcularActionPerformed
+        if (txtMonto.getText().trim().isEmpty() || 
+            txtInteresAnual.getText().trim().isEmpty() || 
+            txtAños.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Por favor, completa todos los campos antes de calcular.");
+            return;
+        }
+
         try {
-            int capital = Integer.parseInt(txtMonto.getText());
-            if (capital < 1000 || capital > 1000000) {
+            double parsedCapital = Double.parseDouble(txtMonto.getText());
+            if (parsedCapital < 1000 || parsedCapital > 1000000) {
                 throw new IllegalArgumentException("El monto a prestar debe estar entre 1,000 y "
                         + "1,000,000.");
             }
+            int capital = (int) parsedCapital;
 
             float tasaInteresAnual = Float.parseFloat(txtInteresAnual.getText());
             if (tasaInteresAnual < 1 || tasaInteresAnual > 100) {
                 throw new IllegalArgumentException("La tasa de interés debe estar entre 1 y 100.");
             }
 
-            byte tiempoAnos = Byte.parseByte(txtAños.getText());
-            if (tiempoAnos < 1 || tiempoAnos > 30) {
+            int parsedAnos = Integer.parseInt(txtAños.getText());
+            if (parsedAnos < 1 || parsedAnos > 30) {
                 throw new IllegalArgumentException("Los años deben estar entre 1 y 30.");
             }
+            byte tiempoAnos = (byte) parsedAnos;
 
             Cuota cuota = new Cuota(capital, tasaInteresAnual, tiempoAnos);
             double pagoMensual = cuota.calcularCuota();
@@ -302,8 +317,8 @@ public class PrestamoHipotecario extends javax.swing.JFrame {
             actualizarComboBox();
             
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "Solo se permiten números enteros sin "
-                    + "espacios ni comas en el monto a prestar.");
+            JOptionPane.showMessageDialog(null, "Por favor ingresa únicamente valores numéricos "
+                    + "válidos, sin letras, espacios ni caracteres especiales.");
         } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(null, e.getMessage());
         }  
@@ -315,18 +330,23 @@ public class PrestamoHipotecario extends javax.swing.JFrame {
     //se muestra el seleccionador de años una vez ejecutado el programa con el boton calcular
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
         JComboBox combo = (JComboBox) evt.getSource();
-        String selectedYear = (String) combo.getSelectedItem();
+        int yearIndex = combo.getSelectedIndex();
 
-        if (selectedYear != null) {
-            int yearNumber = Integer.parseInt(selectedYear.substring(4));
-            int scrollToMonth = yearNumber * 12 + 0; // Calcular el mes a desplazar 
+        if (yearIndex >= 0) {
+            int firstMonthRow = yearIndex * 12; // Índice de la fila (0-based) del primer mes del año
 
             // Obtener el JViewport del JScrollPane que contiene la tabla
             JViewport viewport = jScrollPane2.getViewport();
-            Rectangle rect = jTable2.getCellRect(scrollToMonth - 1, 0, true);
+            Rectangle rect = jTable2.getCellRect(firstMonthRow, 0, true);
 
-            // Desplazar la vista de la tabla hasta la fila deseada
-            viewport.scrollRectToVisible(rect);
+            // Para que la fila quede exactamente arriba, calculamos el límite máximo de desplazamiento
+            int maxY = jTable2.getHeight() - viewport.getHeight();
+            if (maxY < 0) maxY = 0;
+            
+            int viewY = Math.min(rect.y, maxY);
+
+            // Desplazar la vista a la posición exacta
+            viewport.setViewPosition(new java.awt.Point(0, viewY));
         }
     }//GEN-LAST:event_jComboBox1ActionPerformed
     
