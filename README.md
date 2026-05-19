@@ -33,7 +33,7 @@ mvn exec:java
 O si prefieres correr el `.jar` generado directamente:
 
 ```bash
-java -jar target/CalculadoraHipotecaria-1.0-SNAPSHOT.jar
+java -jar target/CalculadoraHipotecaria-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
 
 ## Datos de entrada
